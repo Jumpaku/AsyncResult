@@ -1,0 +1,47 @@
+{
+  "name": "@jumpaku/async-result",
+  "version": "0.1.1",
+  "description": "A typescript library that provides Result, Option, and AsyncResult.",
+  "main": "./dist/index.min.js",
+  "type": "module",
+  "scripts": {
+    "build": "run-s compile bundle",
+    "clean": "rm -rf ./dist/*",
+    "compile": "tsc",
+    "bundle": "rollup ./dist/index.js --file ./dist/index.bundle.js --format es",
+    "minify": "terser --compress --mangle --output ./dist/index.min.js ./dist/index.bundle.js",
+    "test": "jest --runInBand --detectOpenHandles --config=./jest.config.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jumpaku/AsyncResult.git"
+  },
+  "keywords": [
+    "Result",
+    "Option",
+    "AsyncResult",
+    "TypeScript"
+  ],
+  "author": "Jumpaku",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/Jumpaku/AsyncResult/issues"
+  },
+  "homepage": "https://github.com/Jumpaku/AsyncResult#readme",
+  "devDependencies": {
+    "@types/jest": "^26.0.20",
+    "@types/node": "^14.14.28",
+    "jest": "^26.6.3",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^2.2.1",
+    "rollup": "^2.39.0",
+    "terser": "^5.6.0",
+    "ts-jest": "^26.5.1",
+    "typescript": "^4.1.5"
+  },
+  "jest": {
+    "extensionsToTreatAsEsm": [
+      ".ts"
+    ]
+  }
+}
