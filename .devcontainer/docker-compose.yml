@@ -1,0 +1,9 @@
+version: "3"
+
+services:
+  node-dev:
+    build: "./"
+    working_dir: "/node-dev/"
+    command: ["sleep", "infinity"]
+    volumes:
+      - "./../:/node-dev/:delegated"

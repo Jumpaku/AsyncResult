@@ -1,10 +1,11 @@
 {
   "name": "@jumpaku/async-result",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "A typescript library that provides Result, Option, and AsyncResult.",
   "main": "./dist/index.min.js",
   "type": "module",
   "scripts": {
+    "prepublishOnly": "run-s test compile bundle minify",
     "build": "run-s compile bundle",
     "clean": "rm -rf ./dist/*",
     "compile": "tsc",
@@ -43,5 +44,8 @@
     "extensionsToTreatAsEsm": [
       ".ts"
     ]
+  },
+  "dependencies": {
+    "make-error-cause": "^2.3.0"
   }
 }
