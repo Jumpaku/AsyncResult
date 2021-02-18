@@ -13,22 +13,26 @@ export class ResultError<E> extends BaseError {
   }
 }
 
-export const Result = class {
-  static success<V>(value: V): Result<V, never> {
+interface ResultTry {
+  <V>(tryFun: () => V): Result<V, unknown>;
+  <V, E>(tryFun: () => V, catchFun: (error: unknown) => E): Result<V, E>;
+}
+export const Result: {
+  success: <V>(value: V) => Result<V, never>;
+  failure: <E>(error: E) => Result<never, E>;
+  try: ResultTry;
+  isResult: <V, E>(obj: unknown) => obj is Result<V, E>;
+} = {
+  success<V>(value: V): Result<V, never> {
     return new Success<V, never>(value);
-  }
-  static failure<E>(error: E): Result<never, E> {
+  },
+  failure<E>(error: E): Result<never, E> {
     return new Failure<never, E>(error);
-  }
-  static try<V>(tryFun: () => V): Result<V, unknown>;
-  static try<V, E>(
-    tryFun: () => V,
-    catchFun: (error: unknown) => E
-  ): Result<V, E>;
-  static try<V, E>(
+  },
+  try: <V, E>(
     tryFun: () => V,
     catchFun?: (error: unknown) => E
-  ): Result<V, unknown> | Result<V, E> {
+  ): Result<V, unknown> | Result<V, E> => {
     try {
       return Result.success(tryFun());
     } catch (error: unknown) {
@@ -36,11 +40,10 @@ export const Result = class {
         ? Result.failure(error)
         : Result.failure(catchFun(error));
     }
-  }
-  static isResult<V, E>(obj: unknown): obj is Result<V, E> {
+  },
+  isResult<V, E>(obj: unknown): obj is Result<V, E> {
     return obj instanceof AbstractResult;
-  }
-  private constructor() {}
+  },
 };
 
 abstract class AbstractResult<V, E> {
