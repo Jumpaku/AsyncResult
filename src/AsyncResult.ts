@@ -1,11 +1,29 @@
 import { Result } from "./Result";
 
 export class AsyncResult<V, E> {
+  static of<V, E>(result: Result<V, E>): AsyncResult<V, E>;
+  static of<V, E>(result: Promise<Result<V, E>>): AsyncResult<V, unknown>;
+  static of<V, E, F>(
+    result: Promise<Result<V, E>>,
+    catchFun: (error: unknown) => F
+  ): AsyncResult<V, E | F>;
+  static of<V, E, F>(
+    result: Result<V, E> | Promise<Result<V, E>>,
+    catchFun?: (error: unknown) => F
+  ): AsyncResult<V, E | F | unknown> {
+    if (Result.isResult(result))
+      return new AsyncResult(Promise.resolve(result));
+    return catchFun == null
+      ? new AsyncResult(result.catch((error: unknown) => Result.failure(error)))
+      : new AsyncResult<V, E | F>(
+          result.catch((error: unknown) => Result.failure(catchFun(error)))
+        );
+  }
   static success<V>(v: V): AsyncResult<V, never> {
-    return AsyncResult.resolve(Result.success(v));
+    return AsyncResult.of(Result.success(v));
   }
   static failure<E>(e: E): AsyncResult<never, E> {
-    return AsyncResult.resolve(Result.failure(e));
+    return AsyncResult.of(Result.failure(e));
   }
   static try<V>(tryFun: () => V | Promise<V>): AsyncResult<V, unknown>;
   static try<V, E>(
@@ -24,37 +42,18 @@ export class AsyncResult<V, E> {
       }
     }).then(Result.success);
     return catchFun == null
-      ? new AsyncResult<V, unknown>(promise.catch((e) => Result.failure(e)))
-      : new AsyncResult<V, E>(
-          promise.catch((e) => Result.failure(catchFun(e)))
-        );
-  }
-
-  static resolve<V, E>(result: Result<V, E>): AsyncResult<V, E> {
-    return new AsyncResult(Promise.resolve(result));
-  }
-
-  static of<V, E>(result: Promise<Result<V, E>>): AsyncResult<V, unknown>;
-  static of<V, E, F>(
-    result: Promise<Result<V, E>>,
-    catchFun: (error: unknown) => F
-  ): AsyncResult<V, E | F>;
-  static of<V, E, F>(
-    result: Result<V, E> | Promise<Result<V, E>>,
-    catchFun?: (error: unknown) => F
-  ): AsyncResult<V, E | F | unknown> {
-    const promise = Promise.resolve(result);
-    return catchFun == null
-      ? new AsyncResult(
-          promise.catch((error: unknown) => Result.failure(error))
-        )
-      : new AsyncResult<V, E | F>(
-          promise.catch((error: unknown) => Result.failure(catchFun(error)))
-        );
+      ? AsyncResult.of(promise)
+      : AsyncResult.of(promise, catchFun);
   }
 
   private constructor(readonly promise: Promise<Result<V, E>>) {}
 
+  match<X, Y>(
+    onSuccess: (value: V) => X,
+    onFailure: (error: E) => Y
+  ): Promise<X | Y> {
+    return this.promise.then((result) => result.match(onSuccess, onFailure));
+  }
   value(): Promise<V | undefined> {
     return this.promise.then((r) => r.value);
   }
@@ -67,8 +66,8 @@ export class AsyncResult<V, E> {
   orUndefined(): Promise<V | undefined> {
     return this.promise.then((r) => r.orUndefined());
   }
-  orReject(): Promise<V> {
-    return this.promise.then((r) => r.orThrow());
+  orReject<F>(f?: (e: E) => F): Promise<V> {
+    return this.promise.then((r) => (f == null ? r.orThrow() : r.orThrow(f)));
   }
   orDefault(value: V): Promise<V> {
     return this.promise.then((r) => r.orDefault(value));
@@ -76,11 +75,23 @@ export class AsyncResult<V, E> {
   orRecover(neverThrowFun: (e: E) => V): Promise<V> {
     return this.promise.then((r) => r.orRecover(neverThrowFun));
   }
-  match<X, Y>(
-    onSuccess: (value: V) => X,
-    onFailure: (error: E) => Y
-  ): Promise<X | Y> {
-    return this.promise.then((result) => result.match(onSuccess, onFailure));
+  onSuccess(neverThrowFun: (value: V) => void): AsyncResult<V, E> {
+    this.promise.then((r) => r.onSuccess(neverThrowFun));
+    return this;
+  }
+  onFailure(neverThrowFun: (e: E) => void): AsyncResult<V, E> {
+    this.promise.then((r) => r.onFailure(neverThrowFun));
+    return this;
+  }
+  and<U, F>(other: AsyncResult<U, F>): AsyncResult<V | U, E | F> {
+    return new AsyncResult<V | U, E | F>(
+      this.promise.then((r0) => other.promise.then((r1) => r0.and(r1)))
+    );
+  }
+  or<U, F>(other: AsyncResult<U, F>): AsyncResult<V | U, E | F> {
+    return new AsyncResult<V | U, E | F>(
+      this.promise.then((r0) => other.promise.then((r1) => r0.or(r1)))
+    );
   }
   map<U>(neverThrowFun: (v: V) => U): AsyncResult<U, E> {
     return new AsyncResult(
@@ -97,9 +108,12 @@ export class AsyncResult<V, E> {
     catchFun?: (error: unknown) => F
   ): AsyncResult<U, E | F | unknown> {
     return (catchFun == null
-      ? AsyncResult.try(() => this.map(tryFun))
-      : AsyncResult.try(() => this.map(tryFun), catchFun)
-    ).flatMap((it) => it);
+      ? AsyncResult.try(() => this.promise.then((it) => it.tryMap(tryFun)))
+      : AsyncResult.try(
+          () => this.promise.then((it) => it.tryMap(tryFun, catchFun)),
+          catchFun
+        )
+    ).flatMap((it) => AsyncResult.of(it));
   }
   flatMap<U, F>(
     neverThrowFun: (v: V) => AsyncResult<U, F>
@@ -122,10 +136,21 @@ export class AsyncResult<V, E> {
     tryFun: (v: V) => AsyncResult<U, F>,
     catchFun?: (error: unknown) => G
   ): AsyncResult<U, E | F | G | unknown> {
-    return (catchFun == null
-      ? AsyncResult.try(() => this.flatMap(tryFun))
-      : AsyncResult.try(() => this.flatMap(tryFun), catchFun)
-    ).flatMap((it) => it);
+    if (catchFun == null) {
+      const promise = this.promise
+        .then(async (r) =>
+          r.isFailure() ? r.castValue<U>() : tryFun(r.value).promise
+        )
+        .catch((error) => Result.failure<unknown>(error));
+      return AsyncResult.of<U, unknown>(promise);
+    } else {
+      const promise = this.promise
+        .then(async (r) =>
+          r.isFailure() ? r.castValue<U>() : tryFun(r.value).promise
+        )
+        .catch((error) => Result.failure<G>(catchFun(error)));
+      return AsyncResult.of<U, E | F | G>(promise);
+    }
   }
   recover(neverThrowFun: (e: E) => V): AsyncResult<V, never> {
     return new AsyncResult<V, never>(
@@ -141,10 +166,15 @@ export class AsyncResult<V, E> {
     tryFun: (error: E) => V,
     catchFun?: (error: unknown) => F
   ): AsyncResult<V, F | unknown> {
-    return (catchFun == null
-      ? AsyncResult.try(() => this.recover(tryFun))
-      : AsyncResult.try(() => this.recover(tryFun), catchFun)
-    ).flatMap((it) => it);
+    return catchFun == null
+      ? AsyncResult.of(
+          this.match(Result.success, (e) => Result.try(() => tryFun(e)))
+        )
+      : AsyncResult.of(
+          this.match(Result.success, (e) =>
+            Result.try(() => tryFun(e), catchFun)
+          )
+        );
   }
   flatRecover<F>(
     neverThrowFun: (e: E) => AsyncResult<V, F>
@@ -159,9 +189,9 @@ export class AsyncResult<V, E> {
   tryFlatRecover<F>(
     tryFun: (error: E) => AsyncResult<V, F>
   ): AsyncResult<V, unknown>;
-  tryFlatRecover<F>(
+  tryFlatRecover<F, G>(
     tryFun: (error: E) => AsyncResult<V, F>,
-    catchFun: (error: unknown) => F
+    catchFun: (error: unknown) => G
   ): AsyncResult<V, F>;
   tryFlatRecover<F, G>(
     tryFun: (error: E) => AsyncResult<V, F>,
@@ -171,23 +201,5 @@ export class AsyncResult<V, E> {
       ? AsyncResult.try(() => this.flatRecover(tryFun))
       : AsyncResult.try(() => this.flatRecover(tryFun), catchFun)
     ).flatMap((it) => it);
-  }
-  onSuccess(neverThrowFun: (value: V) => void): AsyncResult<V, E> {
-    this.promise.then((r) => r.onSuccess(neverThrowFun));
-    return this;
-  }
-  onFailure(neverThrowFun: (e: E) => void): AsyncResult<V, E> {
-    this.promise.then((r) => r.onFailure(neverThrowFun));
-    return this;
-  }
-  and<U, F>(other: AsyncResult<U, F>): AsyncResult<V | U, E | F> {
-    return new AsyncResult<V | U, E | F>(
-      this.promise.then((r0) => other.promise.then((r1) => r0.and(r1)))
-    );
-  }
-  or<U, F>(other: AsyncResult<U, F>): AsyncResult<V | U, E | F> {
-    return new AsyncResult<V | U, E | F>(
-      this.promise.then((r0) => other.promise.then((r1) => r0.or(r1)))
-    );
   }
 }
