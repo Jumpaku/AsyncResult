@@ -2,15 +2,17 @@
   "name": "@jumpaku/async-result",
   "version": "1.0.0",
   "description": "A typescript library that provides Result, Option, and AsyncResult.",
-  "main": "./dist/index.min.js",
+  "main": "./dist/index.cjs.js",
+  "module": "dist/index.es.js",
+  "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
-    "prepublishOnly": "run-s test compile bundle minify",
-    "build": "run-s compile bundle",
+    "prepublishOnly": "run-p build test",
+    "build": "run-s clean compile bundle",
     "clean": "rm -rf ./dist/*",
     "compile": "tsc",
-    "bundle": "rollup ./dist/index.js --file ./dist/index.bundle.js --format es",
-    "minify": "terser --compress --mangle --output ./dist/index.min.js ./dist/index.bundle.js",
+    "bundle": "rollup -c",
+    "minify": "terser --compress --mangle --output ./dist/index.min.js ./dist/index.es.js",
     "test": "jest --runInBand --detectOpenHandles --config=./jest.config.js"
   },
   "repository": {
@@ -36,6 +38,8 @@
     "npm-run-all": "^4.1.5",
     "prettier": "^2.2.1",
     "rollup": "^2.39.0",
+    "rollup-plugin-dts": "^2.0.1",
+    "rollup-plugin-typescript2": "^0.29.0",
     "terser": "^5.6.0",
     "ts-jest": "^26.5.1",
     "typescript": "^4.1.5"
