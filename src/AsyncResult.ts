@@ -1,6 +1,6 @@
 import { Result } from "./Result";
 
-export class AsyncResult<V, E> {
+export class AsyncResult<V, E> implements PromiseLike<Result<V, E>> {
   static of<V, E>(result: Result<V, E>): AsyncResult<V, E>;
   static of<V, E>(result: Promise<Result<V, E>>): AsyncResult<V, unknown>;
   static of<V, E, F>(
@@ -47,6 +47,19 @@ export class AsyncResult<V, E> {
   }
 
   private constructor(readonly promise: Promise<Result<V, E>>) {}
+
+  then<TResult1 = Result<V, E>, TResult2 = never>(
+    onfulfilled?:
+      | ((value: Result<V, E>) => TResult1 | PromiseLike<TResult1>)
+      | undefined
+      | null,
+    onrejected?:
+      | ((reason: unknown) => TResult2 | PromiseLike<TResult2>)
+      | undefined
+      | null
+  ): Promise<TResult1 | TResult2> {
+    return this.promise.then(onfulfilled, onrejected);
+  }
 
   match<X, Y>(
     onSuccess: (value: V) => X,
@@ -197,9 +210,18 @@ export class AsyncResult<V, E> {
     tryFun: (error: E) => AsyncResult<V, F>,
     catchFun?: (error: unknown) => G
   ): AsyncResult<V, F | G | unknown> {
-    return (catchFun == null
-      ? AsyncResult.try(() => this.flatRecover(tryFun))
-      : AsyncResult.try(() => this.flatRecover(tryFun), catchFun)
-    ).flatMap((it) => it);
+    const promise = new Promise<Result<V, F | G | unknown>>(async (resolve) => {
+      (await this.promise)
+        .onSuccess((value) => resolve(Result.success(value)))
+        .onFailure((error) => {
+          try {
+            resolve(tryFun(error).promise);
+          } catch (e: unknown) {
+            if (catchFun == null) resolve(Result.failure<unknown>(e));
+            else resolve(Result.failure<G>(catchFun(e)));
+          }
+        });
+    });
+    return new AsyncResult<V, F | G | unknown>(promise);
   }
 }
