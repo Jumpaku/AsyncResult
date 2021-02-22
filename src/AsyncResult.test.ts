@@ -187,6 +187,50 @@ describe("Methods when resolved as success", () => {
       expect(error).toEqual(undefined);
     });
   });
+  describe("then", () => {
+    it("resolves with (it) => it.value", () => {
+      const actual = a.then((it) => it.value);
+      return expect(actual).resolves.toEqual(1);
+    });
+    it("resolves with (it) => it.error", () => {
+      const actual = a.then((it) => it.error);
+      return expect(actual).resolves.toEqual(undefined);
+    });
+    it("rejects with (it) => { throw 'Error'; }", () => {
+      const actual = a.then(() => {
+        throw "Error";
+      });
+      return expect(actual).rejects.toEqual("Error");
+    });
+    it("resolves with (it) => it.value and () => -1", () => {
+      const actual = a.then(
+        (it) => it.value,
+        () => -1
+      );
+      return expect(actual).resolves.toEqual(1);
+    });
+    it("resolves with (it) => it.error and () => -1", () => {
+      const actual = a.then(
+        (it) => it.error,
+        () => -1
+      );
+      return expect(actual).resolves.toEqual(undefined);
+    });
+    it("rejects with (it) => { throw 'Error'; } and () => -1", () => {
+      const actual = a.then(
+        () => {
+          throw "Error";
+        },
+        () => -1
+      );
+      return expect(actual).rejects.toEqual("Error");
+    });
+    it("resolves without augments", async () => {
+      const actual: Result<number, never> = await a.then();
+      expect(actual.value).toEqual(1);
+      expect(actual.error).toEqual(undefined);
+    });
+  });
   test("map", async () => {
     const { value, error } = await a.map((v) => v + 1).promise;
     expect(value).toEqual(2);
@@ -434,6 +478,50 @@ describe("Methods when resolved as failure", () => {
         .promise;
       expect(value).toEqual(undefined);
       expect(error).toEqual("Error2");
+    });
+  });
+  describe("then", () => {
+    it("resolves with (it) => it.value", () => {
+      const actual = a.then((it) => it.value);
+      return expect(actual).resolves.toEqual(undefined);
+    });
+    it("resolves with (it) => it.error", () => {
+      const actual = a.then((it) => it.error);
+      return expect(actual).resolves.toEqual("Error");
+    });
+    it("rejects with (it) => { throw 'Error'; }", () => {
+      const actual = a.then(() => {
+        throw "Error2";
+      });
+      return expect(actual).rejects.toEqual("Error2");
+    });
+    it("resolves with (it) => it.value and () => -1", () => {
+      const actual = a.then(
+        (it) => it.value,
+        () => -1
+      );
+      return expect(actual).resolves.toEqual(undefined);
+    });
+    it("resolves with (it) => it.error and () => -1", () => {
+      const actual = a.then(
+        (it) => it.error,
+        () => -1
+      );
+      return expect(actual).resolves.toEqual("Error");
+    });
+    it("rejects with (it) => { throw 'Error'; } and () => -1", () => {
+      const actual = a.then(
+        () => {
+          throw "Error2";
+        },
+        () => -1
+      );
+      return expect(actual).rejects.toEqual("Error2");
+    });
+    it("resolves without augments", async () => {
+      const actual: Result<number, never> = await a.then();
+      expect(actual.value).toEqual(undefined);
+      expect(actual.error).toEqual("Error");
     });
   });
   test("map", async () => {
