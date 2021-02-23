@@ -1,0 +1,37 @@
+import { Result } from "./Result";
+export declare class AsyncResult<V, E> implements PromiseLike<Result<V, E>> {
+    readonly promise: Promise<Result<V, E>>;
+    static of<V, E>(result: Result<V, E>): AsyncResult<V, E>;
+    static of<V, E>(result: Promise<Result<V, E>>): AsyncResult<V, unknown>;
+    static of<V, E, F>(result: Promise<Result<V, E>>, catchFun: (error: unknown) => F): AsyncResult<V, E | F>;
+    static success<V>(v: V): AsyncResult<V, never>;
+    static failure<E>(e: E): AsyncResult<never, E>;
+    static try<V>(tryFun: () => V | Promise<V>): AsyncResult<V, unknown>;
+    static try<V, E>(tryFun: () => V | Promise<V>, catchFun: (e: unknown) => E): AsyncResult<V, E>;
+    private constructor();
+    then<TResult1 = Result<V, E>, TResult2 = never>(onfulfilled?: ((value: Result<V, E>) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | undefined | null): Promise<TResult1 | TResult2>;
+    match<X, Y>(onSuccess: (value: V) => X, onFailure: (error: E) => Y): Promise<X | Y>;
+    value(): Promise<V | undefined>;
+    error(): Promise<E | undefined>;
+    orNull(): Promise<V | null>;
+    orUndefined(): Promise<V | undefined>;
+    orReject<F>(f?: (e: E) => F): Promise<V>;
+    orDefault(value: V): Promise<V>;
+    orRecover(neverThrowFun: (e: E) => V): Promise<V>;
+    onSuccess(neverThrowFun: (value: V) => void): AsyncResult<V, E>;
+    onFailure(neverThrowFun: (e: E) => void): AsyncResult<V, E>;
+    and<U, F>(other: AsyncResult<U, F>): AsyncResult<V | U, E | F>;
+    or<U, F>(other: AsyncResult<U, F>): AsyncResult<V | U, E | F>;
+    map<U>(neverThrowFun: (v: V) => U): AsyncResult<U, E>;
+    tryMap<U>(tryFun: (v: V) => U): AsyncResult<U, unknown>;
+    tryMap<U, F>(tryFun: (v: V) => U, catchFun: (error: unknown) => F): AsyncResult<U, E | F>;
+    flatMap<U, F>(neverThrowFun: (v: V) => AsyncResult<U, F>): AsyncResult<U, E | F>;
+    tryFlatMap<U, F>(tryFun: (v: V) => AsyncResult<U, F>): AsyncResult<U, unknown>;
+    tryFlatMap<U, F, G>(tryFun: (v: V) => AsyncResult<U, F>, catchFun: (error: unknown) => G): AsyncResult<U, E | F | G>;
+    recover(neverThrowFun: (e: E) => V): AsyncResult<V, never>;
+    tryRecover(tryFun: (error: E) => V): AsyncResult<V, unknown>;
+    tryRecover<F>(tryFun: (error: E) => V, catchFun: (error: unknown) => F): AsyncResult<V, F>;
+    flatRecover<F>(neverThrowFun: (e: E) => AsyncResult<V, F>): AsyncResult<V, F>;
+    tryFlatRecover<F>(tryFun: (error: E) => AsyncResult<V, F>): AsyncResult<V, unknown>;
+    tryFlatRecover<F, G>(tryFun: (error: E) => AsyncResult<V, F>, catchFun: (error: unknown) => G): AsyncResult<V, F>;
+}
