@@ -1,0 +1,12 @@
+{
+  "scripts": {
+    "debug:mjs": "rm -f index.mjs && tsc --module ESNext --moduleResolution node index.ts && mv index.js index.mjs && node index.mjs",
+    "debug:cjs": "rm -f index.cjs && tsc --module commonjs index.ts && mv index.js index.cjs && node index.cjs"
+  },
+  "devDependencies": {
+    "typescript": "^4.1.5"
+  },
+  "dependencies": {
+    "@jumpaku/async-result": "^1.2.0"
+  }
+}
