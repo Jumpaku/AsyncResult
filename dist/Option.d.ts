@@ -1,0 +1,70 @@
+interface IOption<T> extends ArrayLike<T>, Iterable<T> {
+    isSome(): this is Some<T>;
+    isNone(): this is None<T>;
+    map<U>(f: (value: T) => U): Option<U>;
+    flatMap<U>(f: (value: T) => Option<U>): Option<U>;
+    orDefault(value: T): T;
+    orBuild(f: () => T): T;
+    orThrow<E>(f?: () => E): T;
+    orNull(): T | null;
+    orUndefined(): T | undefined;
+    takeIf(f: (value: T) => boolean): Option<T>;
+    takeIfNotNull(): Option<NonNullable<T>>;
+    ifPresent(f: (value: T) => void): Option<T>;
+    ifAbsent(f: () => void): Option<T>;
+    and<U>(other: Option<U>): Option<T | U>;
+    or<U>(other: Option<U>): Option<T | U>;
+    readonly length: 0 | 1;
+    [index: number]: T;
+    [Symbol.iterator]: () => Iterator<T>;
+}
+declare class Some<T> implements IOption<T> {
+    readonly value: T;
+    constructor(value: T);
+    isSome(): this is Some<T>;
+    isNone(): this is None<T>;
+    flatMap<U>(f: (value: T) => Option<U>): Option<U>;
+    map<U>(f: (value: T) => U): Option<U>;
+    orDefault(value: T): T;
+    orBuild(f: () => T): T;
+    orThrow<E>(f?: () => E): T;
+    orNull(): T | null;
+    orUndefined(): T | undefined;
+    takeIf(f: (value: T) => boolean): Option<T>;
+    takeIfNotNull(): Option<NonNullable<T>>;
+    ifPresent(f: (value: T) => void): Option<T>;
+    ifAbsent(f: () => void): Option<T>;
+    and<U>(other: Option<U>): Option<T | U>;
+    or<U>(other: Option<U>): Option<T | U>;
+    readonly length = 1;
+    [index: number]: T;
+    0: T;
+    [Symbol.iterator]: () => Iterator<T>;
+}
+declare class None<T = never> implements IOption<T> {
+    static readonly instance: None<never>;
+    private constructor();
+    isSome(): this is Some<T>;
+    isNone(): this is None<T>;
+    flatMap<U>(f: (value: T) => Option<U>): Option<U>;
+    map<U>(f: (value: T) => U): Option<U>;
+    orDefault(value: T): T;
+    orBuild(f: () => T): T;
+    orThrow<E>(f?: () => E): T;
+    orNull(): T | null;
+    orUndefined(): T | undefined;
+    takeIf(f: (value: T) => boolean): Option<T>;
+    takeIfNotNull(): Option<NonNullable<T>>;
+    ifPresent(f: (value: T) => void): Option<T>;
+    ifAbsent(f: () => void): Option<T>;
+    and<U>(other: Option<U>): Option<T | U>;
+    or<U>(other: Option<U>): Option<T | U>;
+    readonly length = 0;
+    [index: number]: T;
+    [Symbol.iterator]: () => Iterator<T>;
+}
+export declare type Option<T> = Some<T> | None<T>;
+export declare function none<T = never>(): Option<T>;
+export declare function some<T>(value: T): Option<T>;
+export declare function nonNull<T>(nullable: T): Option<NonNullable<T>>;
+export {};
