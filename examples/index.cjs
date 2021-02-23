@@ -37,12 +37,43 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 exports.__esModule = true;
 var async_result_1 = require("@jumpaku/async-result");
-function example() {
-    return __awaiter(this, void 0, void 0, function () {
-        return __generator(this, function (_a) {
-            async_result_1.Result.success("Hello").onSuccess(console.log); // => Hello
-            return [2 /*return*/];
-        });
-    });
+// Run this example by `cd examples && npm install && npm run debug:cjs`.
+// Creation of succeeded result with given value.
+async_result_1.AsyncResult.success("Hello").onSuccess(console.log); // => Hello
+// Creation of failed result with given error.
+async_result_1.AsyncResult.failure("Error").onFailure(console.log); // => Panic!
+function panic() {
+    throw new Error("Panic!");
 }
-example();
+function catchError(e) {
+    return e;
+}
+// `try` creates succeeded result if the given function returns a resolved promise or a value without throwing any error.
+async_result_1.AsyncResult["try"](function () { return __awaiter(void 0, void 0, void 0, function () { return __generator(this, function (_a) {
+    return [2 /*return*/, "Hello"];
+}); }); }).onSuccess(console.log); // => Hello
+// `try` creates failed result if the given function returns a rejected promise or throws some error.
+async_result_1.AsyncResult["try"](panic).onFailure(function (e /* The type of `e` is inferred as `unknown`. */) { return console.log(e.message); }); // => Panic!
+async_result_1.AsyncResult["try"](panic, catchError).onFailure(function (e /* The type of `e` is inferred as the returned type of the function given as a second parameter. */) { return console.log(e.message); }); // => Panic!
+function divideTenBy(divisor) {
+    return (async_result_1.AsyncResult.success(undefined)
+        // If the mapping function never throws any errors, you can use the `map` method.
+        .map(function (v) { return 10; })
+        // If the mapping function may throw some errors, you should use the `tryMap` method.
+        .tryMap(function (v) { return (divisor === 0 ? panic() : v / divisor); }, catchError));
+}
+divideTenBy(5).onSuccess(console.log); // => 2
+divideTenBy(0).onFailure(function (e) { return console.log(e.message); }); // => Panic!
+function divideTenByPromise(divisor) {
+    return (async_result_1.AsyncResult.success(undefined)
+        .map(function (v) { return 10; })
+        // If the mapping function returns a `AsyncResult`, you can use the `flatMap` method.
+        .flatMap(function (v) {
+        return async_result_1.AsyncResult["try"](function () { return divisor.then(function (d) { return (d === 0 ? panic() : v / d); }); }, catchError);
+    }));
+}
+divideTenByPromise(Promise.resolve(5)).onSuccess(console.log); // => 2
+divideTenByPromise(Promise.resolve(0)).onFailure(function (e) { return console.log(e.message); }); // => Panic!
+divideTenByPromise(Promise.reject(new Error("Rejected!"))).onFailure(function (e) {
+    return console.log(e.message);
+}); // => Rejected!
