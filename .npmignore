@@ -1,5 +1,6 @@
-node_modules/
+.devcontainer
+node_modules
 .gitignore
 jest.config.js
-.devcontainer/
 src/**/*.test.ts
+examples
