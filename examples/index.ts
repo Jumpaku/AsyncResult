@@ -5,7 +5,7 @@ import { AsyncResult } from "@jumpaku/async-result";
 // Creation of succeeded result with given value.
 AsyncResult.success("Hello").onSuccess(console.log); // => Hello
 // Creation of failed result with given error.
-AsyncResult.failure("Error").onFailure(console.log); // => Panic!
+AsyncResult.failure("Error").onFailure(console.log); // => Error!
 
 function panic() {
   throw new Error("Panic!");
