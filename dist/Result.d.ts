@@ -49,7 +49,9 @@ declare abstract class AbstractResult<V, E> {
     flatRecoverAsync<F, G>(tryFun: (error: E) => Result<V, F> | AsyncResult<V, F>, catchFun: (error: unknown) => G): AsyncResult<V, F | G>;
     tryFlatRecover<F>(tryFun: (error: E) => Result<V, F>): Result<V, unknown>;
     tryFlatRecover<F, G>(tryFun: (error: E) => Result<V, F>, catchFun: (error: unknown) => G): Result<V, F | G>;
-    mapError<F>(f: (error: E) => F): Result<V, F>;
+    mapError<F>(neverThrowFun: (error: E) => F): Result<V, F>;
+    tryMapError<F>(tryFun: (error: E) => F): Result<V, unknown>;
+    tryMapError<F, G>(tryFun: (error: E) => F, catchFun: (error: unknown) => G): Result<V, F | G>;
 }
 export declare class Success<V, E> extends AbstractResult<V, E> {
     readonly value: V;
