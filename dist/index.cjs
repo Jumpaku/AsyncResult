@@ -263,6 +263,14 @@ class AsyncResult {
         });
         return new AsyncResult(promise);
     }
+    mapError(neverThrowFun) {
+        return new AsyncResult(this.promise.then((result) => result.mapError(neverThrowFun)));
+    }
+    tryMapError(tryFun, catchFun) {
+        return (catchFun == null
+            ? AsyncResult.try(() => this.promise.then((it) => it.tryMapError(tryFun)))
+            : AsyncResult.try(() => this.promise.then((it) => it.tryMapError(tryFun, catchFun)), catchFun)).flatMap((it) => AsyncResult.of(it));
+    }
 }
 
 class ResultError extends makeErrorCause.BaseError {
@@ -420,9 +428,16 @@ class AbstractResult {
             ? Result.try(() => this.flatRecover(tryFun))
             : Result.try(() => this.flatRecover(tryFun), catchFun)).flatMap((it) => it);
     }
-    mapError(f) {
+    mapError(neverThrowFun) {
         this.assertsThisIsResult();
-        return this.isFailure() ? Result.failure(f(this.error)) : this.castError();
+        return this.isFailure()
+            ? Result.failure(neverThrowFun(this.error))
+            : this.castError();
+    }
+    tryMapError(tryFun, catchFun) {
+        return (catchFun == null
+            ? Result.try(() => this.mapError(tryFun))
+            : Result.try(() => this.mapError(tryFun), catchFun)).flatMap((it) => it);
     }
 }
 class Success extends AbstractResult {
