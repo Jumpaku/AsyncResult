@@ -224,4 +224,26 @@ export class AsyncResult<V, E> implements PromiseLike<Result<V, E>> {
     });
     return new AsyncResult<V, F | G | unknown>(promise);
   }
+  mapError<F>(neverThrowFun: (error: E) => F): AsyncResult<V, F> {
+    return new AsyncResult(
+      this.promise.then((result) => result.mapError(neverThrowFun))
+    );
+  }
+  tryMapError<F>(tryFun: (error: E) => F): AsyncResult<V, unknown>;
+  tryMapError<F, G>(
+    tryFun: (error: E) => F,
+    catchFun: (error: unknown) => G
+  ): AsyncResult<V, F | G>;
+  tryMapError<F, G>(
+    tryFun: (error: E) => F,
+    catchFun?: (error: unknown) => G
+  ): AsyncResult<V, F | G | unknown> {
+    return (catchFun == null
+      ? AsyncResult.try(() => this.promise.then((it) => it.tryMapError(tryFun)))
+      : AsyncResult.try(
+          () => this.promise.then((it) => it.tryMapError(tryFun, catchFun)),
+          catchFun
+        )
+    ).flatMap((it) => AsyncResult.of(it));
+  }
 }

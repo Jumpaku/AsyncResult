@@ -248,9 +248,25 @@ abstract class AbstractResult<V, E> {
       : Result.try(() => this.flatRecover(tryFun), catchFun)
     ).flatMap((it) => it);
   }
-  mapError<F>(f: (error: E) => F): Result<V, F> {
+  mapError<F>(neverThrowFun: (error: E) => F): Result<V, F> {
     this.assertsThisIsResult();
-    return this.isFailure() ? Result.failure(f(this.error)) : this.castError();
+    return this.isFailure()
+      ? Result.failure(neverThrowFun(this.error))
+      : this.castError();
+  }
+  tryMapError<F>(tryFun: (error: E) => F): Result<V, unknown>;
+  tryMapError<F, G>(
+    tryFun: (error: E) => F,
+    catchFun: (error: unknown) => G
+  ): Result<V, F | G>;
+  tryMapError<F, G>(
+    tryFun: (error: E) => F,
+    catchFun?: (error: unknown) => G
+  ): Result<V, F | G | unknown> {
+    return (catchFun == null
+      ? Result.try(() => this.mapError(tryFun))
+      : Result.try(() => this.mapError(tryFun), catchFun)
+    ).flatMap((it) => it);
   }
 }
 
