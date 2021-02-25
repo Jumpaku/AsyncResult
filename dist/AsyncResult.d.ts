@@ -34,4 +34,7 @@ export declare class AsyncResult<V, E> implements PromiseLike<Result<V, E>> {
     flatRecover<F>(neverThrowFun: (e: E) => AsyncResult<V, F>): AsyncResult<V, F>;
     tryFlatRecover<F>(tryFun: (error: E) => AsyncResult<V, F>): AsyncResult<V, unknown>;
     tryFlatRecover<F, G>(tryFun: (error: E) => AsyncResult<V, F>, catchFun: (error: unknown) => G): AsyncResult<V, F>;
+    mapError<F>(neverThrowFun: (error: E) => F): AsyncResult<V, F>;
+    tryMapError<F>(tryFun: (error: E) => F): AsyncResult<V, unknown>;
+    tryMapError<F, G>(tryFun: (error: E) => F, catchFun: (error: unknown) => G): AsyncResult<V, F | G>;
 }

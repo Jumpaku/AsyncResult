@@ -403,6 +403,39 @@ describe("Methods when resolved as success", () => {
       expect(error).toEqual(undefined);
     });
   });
+  test("mapError", async () => {
+    const { value, error } = await a.mapError(() => "Mapped").promise;
+    expect(value).toEqual(1);
+    expect(error).toEqual(undefined);
+  });
+  describe("tryMapError", () => {
+    const mapper = (v: string) => v + "!";
+    const thrower = (v: string) => {
+      throw "Error";
+      return v + "!";
+    };
+    const catcher = (e: unknown) => "Panic";
+    it("does nothing with mapper", async () => {
+      const { value, error } = await a.tryMapError(mapper).promise;
+      expect(value).toEqual(1);
+      expect(error).toEqual(undefined);
+    });
+    it("does nothing with mapper and catcher", async () => {
+      const { value, error } = await a.tryMapError(mapper, catcher).promise;
+      expect(value).toEqual(1);
+      expect(error).toEqual(undefined);
+    });
+    it("does nothing with thrower", async () => {
+      const { value, error } = await a.tryMapError(thrower).promise;
+      expect(value).toEqual(1);
+      expect(error).toEqual(undefined);
+    });
+    it("does nothing with caught error if no error is thrown and caught", async () => {
+      const { value, error } = await a.tryMapError(thrower, catcher).promise;
+      expect(value).toEqual(1);
+      expect(error).toEqual(undefined);
+    });
+  });
 });
 
 describe("Methods when resolved as failure", () => {
@@ -656,6 +689,39 @@ describe("Methods when resolved as failure", () => {
       ).promise;
       expect(value).toEqual(undefined);
       expect(error).toEqual("Next Error");
+    });
+  });
+  test("mapError", async () => {
+    const { value, error } = await a.mapError(() => "Mapped").promise;
+    expect(value).toEqual(undefined);
+    expect(error).toEqual("Mapped");
+  });
+  describe("tryMapError", () => {
+    const mapper = (v: string) => v + "!";
+    const thrower = (v: string) => {
+      throw "Error1";
+      return v + "!";
+    };
+    const catcher = (e: unknown) => "Panic";
+    it("does nothing with mapper", async () => {
+      const { value, error } = await a.tryMapError(mapper).promise;
+      expect(value).toEqual(undefined);
+      expect(error).toEqual("Error!");
+    });
+    it("does nothing with mapper and catcher", async () => {
+      const { value, error } = await a.tryMapError(mapper, catcher).promise;
+      expect(value).toEqual(undefined);
+      expect(error).toEqual("Error!");
+    });
+    it("does nothing with thrower", async () => {
+      const { value, error } = await a.tryMapError(thrower).promise;
+      expect(value).toEqual(undefined);
+      expect(error).toEqual("Error1");
+    });
+    it("does nothing with caught error if no error is thrown and caught", async () => {
+      const { value, error } = await a.tryMapError(thrower, catcher).promise;
+      expect(value).toEqual(undefined);
+      expect(error).toEqual("Panic");
     });
   });
 });

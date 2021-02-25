@@ -134,5 +134,13 @@ export class AsyncResult {
         });
         return new AsyncResult(promise);
     }
+    mapError(neverThrowFun) {
+        return new AsyncResult(this.promise.then((result) => result.mapError(neverThrowFun)));
+    }
+    tryMapError(tryFun, catchFun) {
+        return (catchFun == null
+            ? AsyncResult.try(() => this.promise.then((it) => it.tryMapError(tryFun)))
+            : AsyncResult.try(() => this.promise.then((it) => it.tryMapError(tryFun, catchFun)), catchFun)).flatMap((it) => AsyncResult.of(it));
+    }
 }
 //# sourceMappingURL=AsyncResult.js.map

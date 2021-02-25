@@ -554,6 +554,34 @@ describe("Methods of Success", () => {
     expect(value).toEqual(1);
     expect(error).toEqual(undefined);
   });
+  describe("tryMapError", () => {
+    const mapper = (v: string) => v + "!";
+    const thrower = (v: string) => {
+      throw "Error";
+      return v + "!";
+    };
+    const catcher = (e: unknown) => "Panic";
+    it("does nothing with mapper", () => {
+      const { value, error } = a.tryMapError(mapper);
+      expect(value).toEqual(1);
+      expect(error).toEqual(undefined);
+    });
+    it("does nothing with mapper and catcher", () => {
+      const { value, error } = a.tryMapError(mapper, catcher);
+      expect(value).toEqual(1);
+      expect(error).toEqual(undefined);
+    });
+    it("does nothing with thrower", () => {
+      const { value, error } = a.tryMapError(thrower);
+      expect(value).toEqual(1);
+      expect(error).toEqual(undefined);
+    });
+    it("does nothing with caught error if no error is thrown and caught", () => {
+      const { value, error } = a.tryMapError(thrower, catcher);
+      expect(value).toEqual(1);
+      expect(error).toEqual(undefined);
+    });
+  });
 });
 
 describe("Methods of Failure", () => {
@@ -1069,5 +1097,33 @@ describe("Methods of Failure", () => {
     const { value, error } = a.mapError(() => "Mapped");
     expect(value).toEqual(undefined);
     expect(error).toEqual("Mapped");
+  });
+  describe("tryMapError", () => {
+    const mapper = (v: string) => v + "!";
+    const thrower = (v: string) => {
+      throw "Error1";
+      return v + "!";
+    };
+    const catcher = (e: unknown) => "Panic";
+    it("does nothing with mapper", () => {
+      const { value, error } = a.tryMapError(mapper);
+      expect(value).toEqual(undefined);
+      expect(error).toEqual("Error!");
+    });
+    it("does nothing with mapper and catcher", () => {
+      const { value, error } = a.tryMapError(mapper, catcher);
+      expect(value).toEqual(undefined);
+      expect(error).toEqual("Error!");
+    });
+    it("does nothing with thrower", () => {
+      const { value, error } = a.tryMapError(thrower);
+      expect(value).toEqual(undefined);
+      expect(error).toEqual("Error1");
+    });
+    it("does nothing with caught error if no error is thrown and caught", () => {
+      const { value, error } = a.tryMapError(thrower, catcher);
+      expect(value).toEqual(undefined);
+      expect(error).toEqual("Panic");
+    });
   });
 });
