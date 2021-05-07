@@ -19,6 +19,22 @@ export class AsyncResult<V, E> implements PromiseLike<Result<V, E>> {
           result.catch((error: unknown) => Result.failure(catchFun(error)))
         );
   }
+  static make<V, E>(
+    neverThrowExecutor: (
+      success: (value: V) => void,
+      failure: (error: E) => void
+    ) => void
+  ): AsyncResult<V, E> {
+    return AsyncResult.of(
+      new Promise<Result<V, E>>((resolve) =>
+        neverThrowExecutor(
+          (v: V) => resolve(Result.success(v)),
+          (e: E) => resolve(Result.failure(e))
+        )
+      ),
+      (e) => e as E
+    );
+  }
   static success<V>(v: V): AsyncResult<V, never> {
     return AsyncResult.of(Result.success(v));
   }

@@ -135,6 +135,9 @@ class AsyncResult {
             ? new AsyncResult(result.catch((error) => Result.failure(error)))
             : new AsyncResult(result.catch((error) => Result.failure(catchFun(error))));
     }
+    static make(neverThrowExecutor) {
+        return AsyncResult.of(new Promise((resolve) => neverThrowExecutor((v) => resolve(Result.success(v)), (e) => resolve(Result.failure(e)))), (e) => e);
+    }
     static success(v) {
         return AsyncResult.of(Result.success(v));
     }

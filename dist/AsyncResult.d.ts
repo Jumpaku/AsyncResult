@@ -4,6 +4,7 @@ export declare class AsyncResult<V, E> implements PromiseLike<Result<V, E>> {
     static of<V, E>(result: Result<V, E>): AsyncResult<V, E>;
     static of<V, E>(result: Promise<Result<V, E>>): AsyncResult<V, unknown>;
     static of<V, E, F>(result: Promise<Result<V, E>>, catchFun: (error: unknown) => F): AsyncResult<V, E | F>;
+    static make<V, E>(neverThrowExecutor: (success: (value: V) => void, failure: (error: E) => void) => void): AsyncResult<V, E>;
     static success<V>(v: V): AsyncResult<V, never>;
     static failure<E>(e: E): AsyncResult<never, E>;
     static try<V>(tryFun: () => V | Promise<V>): AsyncResult<V, unknown>;

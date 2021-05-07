@@ -52,6 +52,20 @@ describe("AsyncResult Creation", () => {
       expect(error).toEqual(-1);
     });
   });
+  describe("make", () => {
+    const resolver = (res: any, rej: unknown) => res(1);
+    const rejecter = (res: unknown, rej: any) => rej("Error");
+    it("resolves with resolver", async () => {
+      const { value, error } = await AsyncResult.make(resolver).promise;
+      expect(value).toEqual(1);
+      expect(error).toEqual(undefined);
+    });
+    it("rejects with rejecter", async () => {
+      const { value, error } = await AsyncResult.make(rejecter).promise;
+      expect(value).toEqual(undefined);
+      expect(error).toEqual("Error");
+    });
+  });
   test("success", async () => {
     const { value, error } = await AsyncResult.success(1).promise;
     expect(value).toEqual(1);
